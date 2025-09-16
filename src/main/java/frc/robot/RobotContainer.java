@@ -19,8 +19,6 @@ import frc.robot.subsystems.*;
 import frc.robot.subsystems.Encoder.EncoderType;
 import frc.robot.subsystems.Motor.MotorType;
 
-import com.pathplanner.lib.auto.NamedCommands;
-
 /**
  * This class is where the bulk of the robot should be declared. Since
  * Command-based is a "declarative" paradigm, very
@@ -36,45 +34,30 @@ public class RobotContainer {
 
   public Command zeroGyro = drivebase.getResetGyro();
 
-  // creates the Joints elbow
-  // cut after 0: new int[] {0,45} shoulder: new int[] {0,32}
-  private final Joint elbow = new Joint(1, 11, 6, false, 0, .01, .01, 0.00, MotorType.SparkMax, EncoderType.CANCoder);
-  private final Joint shoulder = new Joint(2, 12, 5, true, 0, .043, .0000, 0.0000, MotorType.SparkMax,
-      EncoderType.CANCoder);
+  private final Joint elbow = new Joint(11, 6, false, 0, 0.01, 0.01, 0.00, MotorType.SparkMax, EncoderType.CANCoder);
+  private final Joint shoulder = new Joint(12, 5, true, 0, 0.043, 0.0000, 0.0000, MotorType.SparkMax, EncoderType.CANCoder);
+  private final Joint revolver = new Joint(13, 1, true, 0, 0.02, 0.00, 0.0001, MotorType.SparkMax, EncoderType.CANCoder);
 
-  // Creates the Joints commands
   public JointToPosition shoulderMove = new JointToPosition(shoulder);
   public JointToPosition elbowMove = new JointToPosition(elbow);
-  // public JointToPosition wristMove = new JointToPosition(wrist);
-
-  // creates the TCannon subsystems
-  public SolinoidSubsystem tCannon = new SolinoidSubsystem(16, 6);
-  // After 5th variable of revolver: new int[]{0,60,120,180,240,300},
-  public final Joint revolver = new Joint(3, 13, 1, true, 0, .02, 0.00, 0.0001, MotorType.SparkMax,
-      EncoderType.CANCoder);
-  // creates TCannon control commands
-  public FireCannon fireCannon = new FireCannon(tCannon);
   public JointToPosition revolverControl = new JointToPosition(revolver);
-  // creates safty control commands
-  public Command saftyOn = new InstantCommand(() -> tCannon.setSaftey(true));
-  public Command saftyOff = new InstantCommand(() -> tCannon.setSaftey(false));
+
+  public SolinoidSubsystem tCannon = new SolinoidSubsystem(16, 6);
+  public FireCannon fireCannon = new FireCannon(tCannon);
+    
   public Command saftyToggle = new InstantCommand(() -> tCannon.toggleSaftey());
   public Command nextBarrel = new InstantCommand((() -> revolver.setSetpoint((revolver.getSetpoint() + 60) % 360)));
 
-  // creates airHorn
   public DoubleSolinoidSubsystem horn = new DoubleSolinoidSubsystem(16, 7);
-  // creates command for the airHorn
   Command playHorn = new PlayHorn(horn);
   public Command HsaftyToggle = new InstantCommand(() -> horn.toggleSaftey());
 
   // joint tuning commands
-  Joint tuningJoint = elbow;
   public Command TunerCommand = new InstantCommand(
-      () -> tuningJoint.getController().setP(tuningJoint.getController().getP() + .001));
+      () -> elbow.getController().setP(elbow.getController().getP() + .001));
 
   private InstantCommand[] goToPositionCommand = new InstantCommand[2];
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
   static final CommandPS4Controller driverXbox = new CommandPS4Controller(0);
 
   public static CommandPS4Controller getController() {
@@ -118,8 +101,8 @@ public class RobotContainer {
     driverXbox.L2().onTrue(saftyToggle.alongWith(HsaftyToggle));
     driverXbox.button(5).onTrue(zeroGyro);
     driverXbox.R1().and(driverXbox.L1()).onTrue(playHorn);
-    driverXbox.povDown().whileTrue(new InstantCommand(() -> manualArmControl(true)));
-    driverXbox.povUp().whileTrue(new InstantCommand(() -> manualArmControl(false)));
+    // driverXbox.povDown().whileTrue(new InstantCommand(() -> manualArmControl(true)));
+    // driverXbox.povUp().whileTrue(new InstantCommand(() -> manualArmControl(false)));
     driverXbox.povLeft().onTrue(goToPositionCommand[0]);
   }
 

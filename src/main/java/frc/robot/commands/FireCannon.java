@@ -3,25 +3,19 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.SolinoidSubsystem;
 
-import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 
-public class FireCannon extends Command{
-    @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
+public class FireCannon extends Command {
     private final SolinoidSubsystem tshirtCannon;
-    private Timer fireTimer;
-    private Solenoid solenoid;
+    private final Timer fireTimer = new Timer();
 
-    public FireCannon(SolinoidSubsystem tshirtCannon){
+    public FireCannon(SolinoidSubsystem tshirtCannon) {
         this.tshirtCannon = tshirtCannon;
-        this.solenoid = tshirtCannon.getSolenoid();
         addRequirements(tshirtCannon);
-        fireTimer = new Timer();
     }
-    
 
     @Override
-    public void initialize(){
+    public void initialize() {
         fireTimer.start();
         System.out.println("fireing " + !tshirtCannon.getSafety());
         if (!tshirtCannon.getSafety()) {
@@ -30,21 +24,13 @@ public class FireCannon extends Command{
     }
 
     @Override
-    public void execute(){
-
+    public boolean isFinished() {
+        return fireTimer.get() >= 0.25;
     }
 
     @Override
-    public boolean isFinished(){
-        if(fireTimer.get()>=0.25){
-            return true;
-        }
-        else return false;
-    }
-
-    @Override
-    public void end(boolean interrupted){
-        solenoid.set(false);
+    public void end(boolean interrupted) {
+        tshirtCannon.getSolenoid().set(false);
         fireTimer.stop();
         fireTimer.reset();
     }

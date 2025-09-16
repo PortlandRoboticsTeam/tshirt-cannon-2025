@@ -19,21 +19,16 @@ import swervelib.imu.SwerveIMU;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 
-public class SwerveSubsystem extends SubsystemBase
-{
+public class SwerveSubsystem extends SubsystemBase {
     private final SwerveDrive swerveDrive;
     private double speedControl = 1.0;
 
-    public SwerveSubsystem()
-    {
-        try
-        {
+    public SwerveSubsystem() {
+        try {
             File swerveJsonDirectory = new File(Filesystem.getDeployDirectory(), "swerve/neo");
             SwerveDriveTelemetry.verbosity = Constants.telemetryVerbosity;
             swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(Constants.maximumSpeed);
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException("Failed to load swerve config", e);
         }
     }
@@ -48,62 +43,53 @@ public class SwerveSubsystem extends SubsystemBase
      * @return Drive command
      */
     public Command driveCommand(DoubleSupplier translationX,
-                                DoubleSupplier translationY,
-                                DoubleSupplier angularRotationX,
-                                DoubleSupplier speedController)
-    {
+            DoubleSupplier translationY,
+            DoubleSupplier angularRotationX,
+            DoubleSupplier speedController) {
         return run(() -> {
             speedControl = speedController.getAsDouble() / 2 + 0.8;
             swerveDrive.drive(
-                new Translation2d(
-                    translationX.getAsDouble() * swerveDrive.getMaximumChassisVelocity() * speedControl,
-                    translationY.getAsDouble() * swerveDrive.getMaximumChassisVelocity() * speedControl),
-                angularRotationX.getAsDouble() * swerveDrive.getMaximumChassisAngularVelocity(),
-                false,  // 🚫 Robot-oriented only (no field-relative)
-                false   // Open loop
+                    new Translation2d(
+                            translationX.getAsDouble() * swerveDrive.getMaximumChassisVelocity() * speedControl,
+                            translationY.getAsDouble() * swerveDrive.getMaximumChassisVelocity() * speedControl),
+                    angularRotationX.getAsDouble() * swerveDrive.getMaximumChassisAngularVelocity(),
+                    false, // 🚫 Robot-oriented only (no field-relative)
+                    false // Open loop
             );
         });
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         swerveDrive.updateOdometry();
     }
 
     /** Reset gyro heading to zero. */
-    public Command getResetGyro()
-    {
+    public Command getResetGyro() {
         return new InstantCommand(() -> swerveDrive.zeroGyro(), this);
     }
 
-    public Pose2d getPose()
-    {
+    public Pose2d getPose() {
         return swerveDrive.getPose();
     }
 
-    public void resetOdometry(Pose2d pose)
-    {
+    public void resetOdometry(Pose2d pose) {
         swerveDrive.resetOdometry(pose);
     }
 
-    public Rotation2d getHeading()
-    {
+    public Rotation2d getHeading() {
         return getPose().getRotation();
     }
 
-    public ChassisSpeeds getRobotVelocity()
-    {
+    public ChassisSpeeds getRobotVelocity() {
         return swerveDrive.getRobotVelocity();
     }
 
-    public SwerveIMU getGyro()
-    {
+    public SwerveIMU getGyro() {
         return swerveDrive.getGyro();
     }
 
-    public SwerveDrive getDriveTrain()
-    {
+    public SwerveDrive getDriveTrain() {
         return swerveDrive;
     }
 }

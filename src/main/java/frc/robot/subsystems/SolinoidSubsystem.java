@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class SolinoidSubsystem extends SubsystemBase{
     private boolean saftey = true;
-    private Solenoid solenoid;
+    private final Solenoid solenoid;
     
     public SolinoidSubsystem(int modualID, int channel){
         solenoid = new Solenoid(modualID ,PneumaticsModuleType.REVPH, channel);
@@ -16,10 +16,6 @@ public class SolinoidSubsystem extends SubsystemBase{
         return solenoid;
     }
 
-    public void setSolenoid(Solenoid solenoid) {
-        this.solenoid = solenoid;
-    }
-    
     public boolean getSafety() {
         return saftey;
     }
