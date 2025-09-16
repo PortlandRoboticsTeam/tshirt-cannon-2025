@@ -10,12 +10,12 @@ public class Encoder {
     EncoderType type;
     double offset = 0;
 
-    public enum EncoderType{
+    public enum EncoderType {
         CANCoder,
         DutyCycle,
-        Ghost
     }
-    public Encoder(int id, EncoderType type){
+
+    public Encoder(int id, EncoderType type) {
         this.type = type;
         switch (type) {
             case CANCoder:
@@ -26,26 +26,29 @@ public class Encoder {
             default:
                 break;
         }
-        // cancoder.getFaultField().get
     }
-    public double getValue(){
+
+    public double getValue() {
         switch (type) {
             case CANCoder:
-                return cancoder.getPosition().getValueAsDouble()-offset;
+                return cancoder.getPosition().getValueAsDouble() - offset;
             case DutyCycle:
-                return dutyEncoder.get()-offset;
+                return dutyEncoder.get() - offset;
             default:
-            return-1;
+                return -1;
         }
     }
-    public void setOffset(double offset){
+
+    public void setOffset(double offset) {
         this.offset = offset;
     }
-    public void setOffsetTo(double newOffset){
+
+    public void setOffsetTo(double newOffset) {
         setOffset(0);
-        setOffset(getValue()-newOffset);
+        setOffset(getValue() - newOffset);
     }
-    public boolean isConnected(){
+
+    public boolean isConnected() {
         switch (type) {
             case CANCoder:
                 return cancoder.isConnected();
