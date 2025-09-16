@@ -17,12 +17,12 @@ public class Motor {
     boolean inverted;
     idleMode idlMode = idleMode.Brake;
 
-    public enum MotorType{
+    public enum MotorType {
         SparkMax,
-        Talon,
-        Ghost // this is for motors that dont exist yet
+        Talon
     }
-    public enum idleMode{
+
+    public enum idleMode {
         Coast,
         Brake
     }
@@ -32,28 +32,28 @@ public class Motor {
         switch (type) {
             case SparkMax:
                 sparkMax = new SparkMax(motorID, SparkLowLevel.MotorType.kBrushless);
-            break;
-            //      :)
+                break;
             case Talon:
                 talon = new TalonFX(motorID);
-            break;
-        
+                break;
             default:
                 break;
         }
     }
+
     public void set(double output) {
         switch (type) {
             case SparkMax:
-                sparkMax.set(inverted?-output:output);
+                sparkMax.set(inverted ? -output : output);
                 break;
             case Talon:
-                talon.set(inverted?-output:output);
+                talon.set(inverted ? -output : output);
                 break;
             default:
                 break;
         }
     }
+
     public double getVoltage() {
         switch (type) {
             case SparkMax:
@@ -64,46 +64,50 @@ public class Motor {
                 return 0;
         }
     }
+
     public void invert() {
         inverted = !inverted;
     }
-    public void setNeutralMode(idleMode mode){
+
+    public void setNeutralMode(idleMode mode) {
         try {
             switch (type) {
-            case Talon:
-                switch (idlMode) {
-                    case Brake:
-                        talon.setNeutralMode(NeutralModeValue.Brake);
-                        break;
-                    case Coast:
-                        talon.setNeutralMode(NeutralModeValue.Coast);
-                        break;
-                    default:
-                        break;
-                }
-            case SparkMax:
-                switch (idlMode) {
-                    case Brake:
-                        SparkBaseConfig conb = new SparkMaxConfig();
-                        conb.idleMode(IdleMode.kBrake);
-                        sparkMax.configure(conb, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-                        break;
-                    case Coast:
-                        SparkBaseConfig conc = new SparkMaxConfig();
-                        conc.idleMode(IdleMode.kBrake);
-                        sparkMax.configure(conc, SparkBase.ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-                    default:
-                        break;
-                }
-                break;
-            default:
-                break;
-        }
-            
+                case Talon:
+                    switch (idlMode) {
+                        case Brake:
+                            talon.setNeutralMode(NeutralModeValue.Brake);
+                            break;
+                        case Coast:
+                            talon.setNeutralMode(NeutralModeValue.Coast);
+                            break;
+                        default:
+                            break;
+                    }
+                case SparkMax:
+                    switch (idlMode) {
+                        case Brake:
+                            SparkBaseConfig conb = new SparkMaxConfig();
+                            conb.idleMode(IdleMode.kBrake);
+                            sparkMax.configure(conb, SparkBase.ResetMode.kNoResetSafeParameters,
+                                    PersistMode.kPersistParameters);
+                            break;
+                        case Coast:
+                            SparkBaseConfig conc = new SparkMaxConfig();
+                            conc.idleMode(IdleMode.kBrake);
+                            sparkMax.configure(conc, SparkBase.ResetMode.kNoResetSafeParameters,
+                                    PersistMode.kPersistParameters);
+                        default:
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
         } catch (Exception e) {
             // TODO: handle exception
         }
-        
+
     }
 
 }
