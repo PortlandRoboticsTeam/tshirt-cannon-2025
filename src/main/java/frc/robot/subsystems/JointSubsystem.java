@@ -7,7 +7,8 @@ import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.subsystems.Encoder.EncoderType;
-import frc.robot.subsystems.Motor.MotorType;
+import frc.robot.subsystems.motors.Motor;
+import frc.robot.subsystems.motors.Motor.MotorType;
 
 public class JointSubsystem extends SubsystemBase {
     private final PIDController pid;

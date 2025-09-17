@@ -6,9 +6,9 @@ package frc.robot;
 
 import edu.wpi.first.math.util.Units;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
-import frc.robot.subsystems.Motor.MotorType;
 import frc.robot.subsystems.ArmPosition;
 import frc.robot.subsystems.Encoder.EncoderType;
+import frc.robot.subsystems.motors.Motor.MotorType;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide

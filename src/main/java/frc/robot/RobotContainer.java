@@ -7,16 +7,13 @@ package frc.robot;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ArmConstants;
-import frc.robot.commands.FireCannon;
-import frc.robot.commands.PlayHorn;
 
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.Encoder.EncoderType;
-import frc.robot.subsystems.Motor.MotorType;
+import frc.robot.subsystems.motors.Motor.MotorType;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -38,31 +35,18 @@ public class RobotContainer {
   private final JointSubsystem shoulder = new JointSubsystem(12, 5, true, 0, 0.043, 0.0000, 0.0000, MotorType.SparkMax,
       EncoderType.CANCoder);
   private final RevolverSubsystem revolver = new RevolverSubsystem(13, 1);
-
-  public SolinoidSubsystem tCannon = new SolinoidSubsystem(16, 6);
-  public FireCannon fireCannon = new FireCannon(tCannon);
-
-  public Command saftyToggle = new InstantCommand(() -> tCannon.toggleSaftey());
-  public Command nextBarrel = new InstantCommand((() -> revolver.nextSlot()));
-
-  public DoubleSolinoidSubsystem horn = new DoubleSolinoidSubsystem(16, 7);
-  Command playHorn = new PlayHorn(horn);
-  public Command HsaftyToggle = new InstantCommand(() -> horn.toggleSaftey());
+  public HornSubsystem horn = new HornSubsystem(16, 7, 15);
+  public CannonSubsystem tCannon = new CannonSubsystem(16, 6);
 
   private InstantCommand[] goToPositionCommand = new InstantCommand[2];
 
-  static final CommandPS4Controller driverXbox = new CommandPS4Controller(0);
-
-  public static CommandPS4Controller getController() {
-    return driverXbox;
-  }
+  private final CommandPS4Controller driverXbox = new CommandPS4Controller(0);
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
     configureArmSystems();
-
     configureBindings();
 
     Command driveCommand = drivebase.driveCommand(
@@ -70,31 +54,24 @@ public class RobotContainer {
         () -> -MathUtil.applyDeadband(driverXbox.getRawAxis(0), Constants.DEADBAND),
         () -> -MathUtil.applyDeadband(driverXbox.getRawAxis(2), Constants.DEADBAND),
         () -> -MathUtil.applyDeadband(driverXbox.getRawAxis(5), .4));
-
     drivebase.setDefaultCommand(driveCommand);
   }
 
   /**
-   * Use this method to define your trigger->command mappings. Triggers can be
-   * created via the
-   * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with
-   * an arbitrary predicate, or via the
-   * named factories in
-   * {@link edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses
-   * for
-   * {@link CommandXboxController
-   * Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller PS4}
-   * controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick
-   * Flight joysticks}.
+   * Binds the controls on the xbox controller to commands on the robot.
    */
   private void configureBindings() {
-    driverXbox.cross().onTrue(nextBarrel);
-    driverXbox.R2().onTrue(fireCannon);
-    driverXbox.L2().onTrue(saftyToggle.alongWith(HsaftyToggle));
     driverXbox.button(5).onTrue(zeroGyro);
-    driverXbox.R1().and(driverXbox.L1()).onTrue(playHorn);
-    driverXbox.povDown().whileTrue(new InstantCommand(() -> manualArmControl(true)));
-    driverXbox.povUp().whileTrue(new InstantCommand(() -> manualArmControl(false)));
+
+    // Both the cannon and horn are only activated when the safety (L1) is held
+    driverXbox.R1().and(driverXbox.L1()).whileTrue(horn.generateHoldCommand());
+    driverXbox.R2().and(driverXbox.L1()).onTrue(tCannon.generateFireCommand());
+
+    driverXbox.cross().onTrue(new InstantCommand((() -> revolver.nextSlot())));
+
+    driverXbox.povDown().whileTrue(new RunCommand(() -> manualArmControl(true), shoulder, elbow));
+    driverXbox.povUp().whileTrue(new RunCommand(() -> manualArmControl(false), shoulder, elbow));
+    
     driverXbox.povLeft().onTrue(goToPositionCommand[0]);
   }
 
@@ -123,7 +100,7 @@ public class RobotContainer {
 
   public void manualArmControl(boolean reversed) {
     double delta = (reversed ? -1 : 1) * 2.0 / 360.0; // ~2 degrees per press
-    shoulder.setSetpoint(shoulder.getSetpoint() + delta); 
+    shoulder.setSetpoint(shoulder.getSetpoint() + delta);
     elbow.setSetpoint(elbow.getSetpoint() + delta);
   }
 
