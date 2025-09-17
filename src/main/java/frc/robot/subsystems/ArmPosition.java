@@ -2,21 +2,25 @@ package frc.robot.subsystems;
 
 public class ArmPosition {
 
-  private double shoulderPos;
-  private double telescopePos;
-  private double wristPos;
-  private String name;
+  private final double shoulderPos;
+  private final double elbowPos;
+  private final String name;
 
-  public ArmPosition (double sPos, double tPos, double wPos, String _name){
+  public ArmPosition(double sPos, double tPos, String nme) {
     shoulderPos = sPos;
-    telescopePos = tPos;
-    wristPos = wPos;
-    name = _name;
+    elbowPos = tPos;
+    name = nme;
   }
 
-  public double getShoulderPos (){ return shoulderPos;  }
-  public double getTelescopePos(){ return telescopePos; }
-  public double getWristPos    (){ return wristPos;     }
+  public double getShoulderPos() {
+    return shoulderPos;
+  }
 
-  public String getName() { return name; }
+  public double getElbowPos() {
+    return elbowPos;
+  }
+
+  public String getName() {
+    return name;
+  }
 }

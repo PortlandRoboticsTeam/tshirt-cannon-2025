@@ -9,20 +9,28 @@ import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.subsystems.Encoder.EncoderType;
 import frc.robot.subsystems.Motor.MotorType;
 
-public class Joint extends SubsystemBase {
-    private PIDController pid;
-    private Encoder encoder;
-    private Motor motor;
+public class JointSubsystem extends SubsystemBase {
+    private final PIDController pid;
+    private final Encoder encoder;
+    private final Motor motor;
+
     private double setpoint;
-    private boolean inverted;
+    private final boolean inverted;
     private double minPosition, maxPosition;
     private boolean isBounded = false;
     private boolean PIDEnabled = true;
 
-    public Joint(int motorID, int encoderID, boolean inverted, int defaultSetpoint,
-            double kP, double kI, double kD, MotorType motorType, EncoderType eType) {
+    public JointSubsystem(
+            int motorID,
+            int encoderID,
+            boolean inverted,
+            int defaultSetpoint,
+            double kP, double kI, double kD,
+            MotorType motorType,
+            EncoderType eType) {
+
         pid = new PIDController(kP, kI, kD);
-        pid.enableContinuousInput(-180, 180);
+        pid.enableContinuousInput(-180, 180); // good for arm joints rotating continuously
         this.encoder = new Encoder(encoderID, eType);
         this.motor = new Motor(motorID, motorType);
         this.setpoint = defaultSetpoint;
@@ -58,9 +66,9 @@ public class Joint extends SubsystemBase {
     }
 
     // --- Motor control ---
-    public void setSpeed(double speedPercentage) {
+    private void setSpeed(double speedPercentage) {
         double output = inverted ? -speedPercentage : speedPercentage;
-        output = Math.max(-1.0, Math.min(1.0, output));
+        output = Math.max(-1.0, Math.min(1.0, output)); // clamp
         motor.set(output);
     }
 
@@ -86,10 +94,6 @@ public class Joint extends SubsystemBase {
     }
 
     // --- PID ---
-    public PIDController getController() {
-        return pid;
-    }
-
     public PIDController getPID() {
         return pid;
     }
@@ -127,6 +131,18 @@ public class Joint extends SubsystemBase {
 
     public Motor getMotor() {
         return motor;
+    }
+
+    @Override
+    public void periodic() {
+        if (PIDEnabled) {
+            if (!isNearSetpoint(1.0)) { // 1° tolerance, adjust if needed
+                double output = pid.calculate(getAngleDegrees(), setpoint);
+                setSpeed(output);
+            } else {
+                stop();
+            }
+        }
     }
 
     @Override

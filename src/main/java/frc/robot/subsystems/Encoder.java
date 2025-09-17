@@ -48,6 +48,10 @@ public class Encoder {
         setOffset(getValue() - newOffset);
     }
 
+    public double getAngleDegrees() {
+        return getValue() * 360 % 360;
+    }
+    
     public boolean isConnected() {
         switch (type) {
             case CANCoder:

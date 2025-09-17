@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ArmConstants;
 import frc.robot.commands.FireCannon;
-import frc.robot.commands.JointToPosition;
 import frc.robot.commands.PlayHorn;
 
 import frc.robot.subsystems.*;
@@ -34,27 +33,21 @@ public class RobotContainer {
 
   public Command zeroGyro = drivebase.getResetGyro();
 
-  private final Joint elbow = new Joint(11, 6, false, 0, 0.01, 0.01, 0.00, MotorType.SparkMax, EncoderType.CANCoder);
-  private final Joint shoulder = new Joint(12, 5, true, 0, 0.043, 0.0000, 0.0000, MotorType.SparkMax, EncoderType.CANCoder);
-  private final Joint revolver = new Joint(13, 1, true, 0, 0.02, 0.00, 0.0001, MotorType.SparkMax, EncoderType.CANCoder);
-
-  public JointToPosition shoulderMove = new JointToPosition(shoulder);
-  public JointToPosition elbowMove = new JointToPosition(elbow);
-  public JointToPosition revolverControl = new JointToPosition(revolver);
+  private final JointSubsystem elbow = new JointSubsystem(11, 6, false, 0, 0.01, 0.01, 0.00, MotorType.SparkMax,
+      EncoderType.CANCoder);
+  private final JointSubsystem shoulder = new JointSubsystem(12, 5, true, 0, 0.043, 0.0000, 0.0000, MotorType.SparkMax,
+      EncoderType.CANCoder);
+  private final RevolverSubsystem revolver = new RevolverSubsystem(13, 1);
 
   public SolinoidSubsystem tCannon = new SolinoidSubsystem(16, 6);
   public FireCannon fireCannon = new FireCannon(tCannon);
-    
+
   public Command saftyToggle = new InstantCommand(() -> tCannon.toggleSaftey());
-  public Command nextBarrel = new InstantCommand((() -> revolver.setSetpoint((revolver.getSetpoint() + 60) % 360)));
+  public Command nextBarrel = new InstantCommand((() -> revolver.nextSlot()));
 
   public DoubleSolinoidSubsystem horn = new DoubleSolinoidSubsystem(16, 7);
   Command playHorn = new PlayHorn(horn);
   public Command HsaftyToggle = new InstantCommand(() -> horn.toggleSaftey());
-
-  // joint tuning commands
-  public Command TunerCommand = new InstantCommand(
-      () -> elbow.getController().setP(elbow.getController().getP() + .001));
 
   private InstantCommand[] goToPositionCommand = new InstantCommand[2];
 
@@ -68,10 +61,10 @@ public class RobotContainer {
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
-    // configureArmSystems();
+    configureArmSystems();
 
     configureBindings();
-    
+
     Command driveCommand = drivebase.driveCommand(
         () -> -MathUtil.applyDeadband(driverXbox.getRawAxis(1), Constants.DEADBAND),
         () -> -MathUtil.applyDeadband(driverXbox.getRawAxis(0), Constants.DEADBAND),
@@ -79,7 +72,6 @@ public class RobotContainer {
         () -> -MathUtil.applyDeadband(driverXbox.getRawAxis(5), .4));
 
     drivebase.setDefaultCommand(driveCommand);
-    revolver.setDefaultCommand(revolverControl);
   }
 
   /**
@@ -101,40 +93,37 @@ public class RobotContainer {
     driverXbox.L2().onTrue(saftyToggle.alongWith(HsaftyToggle));
     driverXbox.button(5).onTrue(zeroGyro);
     driverXbox.R1().and(driverXbox.L1()).onTrue(playHorn);
-    // driverXbox.povDown().whileTrue(new InstantCommand(() -> manualArmControl(true)));
-    // driverXbox.povUp().whileTrue(new InstantCommand(() -> manualArmControl(false)));
+    driverXbox.povDown().whileTrue(new InstantCommand(() -> manualArmControl(true)));
+    driverXbox.povUp().whileTrue(new InstantCommand(() -> manualArmControl(false)));
     driverXbox.povLeft().onTrue(goToPositionCommand[0]);
   }
 
-  // private void configureArmSystems() {
-  //   elbow.getPID().enableContinuousInput(0, -360);
-  //   shoulder.setDefaultCommand(new JointToPosition(shoulder));
-  //   elbow.setDefaultCommand(new JointToPosition(elbow));
-  //   if (ArmConstants.useBounds) {
-  //     shoulder.applyBounds(ArmConstants.shoulderMin, ArmConstants.shoulderMax);
-  //     elbow.applyBounds(ArmConstants.telescopeMin, ArmConstants.telescopeMax);
-  //   }
+  private void configureArmSystems() {
+    // Apply bounds
+    shoulder.applyBounds(ArmConstants.shoulderMin / 360.0, ArmConstants.shoulderMax / 360.0);
+    elbow.applyBounds(ArmConstants.elbowMin / 360.0, ArmConstants.elbowMax / 360.0);
 
-  //   shoulder.getEncoder().setOffset(ArmConstants.shoulderOffset / 360);
-  //   elbow.getEncoder().setOffset(ArmConstants.wristOffset / 360);
+    // Set encoder offsets (degrees -> rotations)
+    shoulder.getEncoder().setOffset(ArmConstants.shoulderOffset / 360.0);
+    elbow.getEncoder().setOffset(ArmConstants.elbowOffset / 360.0);
 
-  //   shoulder.setSetpoint(shoulder.getAngleDegrees());
-  //   elbow.setSetpoint(elbow.getAngleDegrees());
+    // Commented out for safety: don't move the joints automatically at startup
+    // shoulder.setSetpoint(shoulder.getAngleDegrees() / 360.0);
+    // elbow.setSetpoint(elbow.getAngleDegrees() / 360.0);
 
-  //   // defining all the setpoint commands
-  //   for (int i = 0; i < ArmConstants.positions.length; i++) {
-  //     ArmPosition thisArmPosition = ArmConstants.positions[i];
-  //     goToPositionCommand[i] = new InstantCommand(() -> {
-  //       shoulder.setSetpoint(thisArmPosition.getShoulderPos());
-  //       elbow.setSetpoint(thisArmPosition.getTelescopePos());
-  //     });
-  //     NamedCommands.registerCommand(thisArmPosition.getName(), goToPositionCommand[i]);
-  //   }
-  // }
+    // Pre-build commands for named positions
+    for (int i = 0; i < ArmConstants.positions.length; i++) {
+      final int index = i;
+      goToPositionCommand[i] = new InstantCommand(() -> {
+        shoulder.setSetpoint(ArmConstants.positions[index].getShoulderPos() / 360.0);
+        elbow.setSetpoint(ArmConstants.positions[index].getElbowPos() / 360.0);
+      });
+    }
+  }
 
   public void manualArmControl(boolean reversed) {
-    double delta = reversed ? -1 : 1;
-    shoulder.setSetpoint(shoulder.getSetpoint() + delta);
+    double delta = (reversed ? -1 : 1) * 2.0 / 360.0; // ~2 degrees per press
+    shoulder.setSetpoint(shoulder.getSetpoint() + delta); 
     elbow.setSetpoint(elbow.getSetpoint() + delta);
   }
 
