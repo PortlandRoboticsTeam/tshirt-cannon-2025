@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-import frc.robot.subsystems.Encoder.EncoderType;
 import frc.robot.subsystems.motors.Motor;
 import frc.robot.subsystems.motors.Motor.MotorType;
 
@@ -23,7 +22,7 @@ public class RevolverSubsystem extends SubsystemBase {
 
     public RevolverSubsystem(int motorID, int encoderID) {
         this.motor = new Motor(motorID, MotorType.SparkMax);
-        this.encoder = new Encoder(encoderID, EncoderType.CANCoder);
+        this.encoder = new Encoder(encoderID);
         this.pid = new PIDController(0.02, 0.0, 0.0001); // tune PID
 
         this.slotRotations = 1.0 / slotCount;

@@ -7,7 +7,6 @@ package frc.robot;
 import edu.wpi.first.math.util.Units;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import frc.robot.subsystems.ArmPosition;
-import frc.robot.subsystems.Encoder.EncoderType;
 import frc.robot.subsystems.motors.Motor.MotorType;
 
 /**
@@ -24,7 +23,7 @@ import frc.robot.subsystems.motors.Motor.MotorType;
  */
 public final class Constants {
   public static final double DEADBAND = 0.1;
-  public static final double maximumSpeed = Units.feetToMeters(4);// TODO max speed
+  public static final double maximumSpeed = Units.feetToMeters(4);
   public static final TelemetryVerbosity telemetryVerbosity = TelemetryVerbosity.LOW;
   public static final int servoID = 0;
 
@@ -34,7 +33,6 @@ public final class Constants {
     public static final double shoulderOffset = 27 - 60, shoulderMin = 0, shoulderMax = 184;
     public static final int shoulder1ID = 13, shoulder2ID = 14;
     public static final int shoulderEncoderID = 0;
-    public static final EncoderType shoulderEncoderType = EncoderType.DutyCycle;
     public static final double elbowOffset = 0, elbowMin =  0, elbowMax = 744;
 
     public static final ArmPosition[] positions = {

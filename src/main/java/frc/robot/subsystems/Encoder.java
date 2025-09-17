@@ -2,64 +2,36 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
-
 public class Encoder {
-    CANcoder cancoder;
-    DutyCycleEncoder dutyEncoder;
-    EncoderType type;
-    double offset = 0;
+    private final CANcoder cancoder;
+    private double offset = 0;
 
-    public enum EncoderType {
-        CANCoder,
-        DutyCycle,
+    public Encoder(int id) {
+        cancoder = new CANcoder(id);
     }
 
-    public Encoder(int id, EncoderType type) {
-        this.type = type;
-        switch (type) {
-            case CANCoder:
-                cancoder = new CANcoder(id);
-                break;
-            case DutyCycle:
-                dutyEncoder = new DutyCycleEncoder(id);
-            default:
-                break;
-        }
-    }
-
+    /** Returns raw rotations */
     public double getValue() {
-        switch (type) {
-            case CANCoder:
-                return cancoder.getPosition().getValueAsDouble() - offset;
-            case DutyCycle:
-                return dutyEncoder.get() - offset;
-            default:
-                return -1;
-        }
+        return cancoder.getPosition().getValueAsDouble() - offset;
     }
 
+    /** Returns angle in degrees (0–360) */
+    public double getAngleDegrees() {
+        return getValue() * 360 % 360;
+    }
+
+    /** Set an offset so zero is at a specific position */
     public void setOffset(double offset) {
         this.offset = offset;
     }
 
+    /** Set zero to a specific position */
     public void setOffsetTo(double newOffset) {
-        setOffset(0);
-        setOffset(getValue() - newOffset);
+        offset = getValue() - newOffset;
     }
 
-    public double getAngleDegrees() {
-        return getValue() * 360 % 360;
-    }
-    
+    /** Returns true if encoder is connected */
     public boolean isConnected() {
-        switch (type) {
-            case CANCoder:
-                return cancoder.isConnected();
-            case DutyCycle:
-                return dutyEncoder.isConnected();
-            default:
-                return false;
-        }
+        return cancoder.isConnected();
     }
 }

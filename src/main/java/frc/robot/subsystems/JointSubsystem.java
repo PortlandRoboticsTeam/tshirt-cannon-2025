@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-import frc.robot.subsystems.Encoder.EncoderType;
 import frc.robot.subsystems.motors.Motor;
 import frc.robot.subsystems.motors.Motor.MotorType;
 
@@ -27,12 +26,11 @@ public class JointSubsystem extends SubsystemBase {
             boolean inverted,
             int defaultSetpoint,
             double kP, double kI, double kD,
-            MotorType motorType,
-            EncoderType eType) {
+            MotorType motorType) {
 
         pid = new PIDController(kP, kI, kD);
         pid.enableContinuousInput(-180, 180); // good for arm joints rotating continuously
-        this.encoder = new Encoder(encoderID, eType);
+        this.encoder = new Encoder(encoderID);
         this.motor = new Motor(motorID, motorType);
         this.setpoint = defaultSetpoint;
         this.inverted = inverted;

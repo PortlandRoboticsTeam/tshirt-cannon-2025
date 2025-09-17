@@ -10,18 +10,11 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.Constants.ArmConstants;
-
 import frc.robot.subsystems.*;
-import frc.robot.subsystems.Encoder.EncoderType;
 import frc.robot.subsystems.motors.Motor.MotorType;
 
 /**
- * This class is where the bulk of the robot should be declared. Since
- * Command-based is a "declarative" paradigm, very
- * little robot logic should actually be handled in the {@link Robot} periodic
- * methods (other than the scheduler calls).
- * Instead, the structure of the robot (including subsystems, commands, and
- * trigger mappings) should be declared here.
+ * Configures button mappings and subsystems for the robots.
  */
 public class RobotContainer {
 
@@ -30,15 +23,11 @@ public class RobotContainer {
 
   public Command zeroGyro = drivebase.getResetGyro();
 
-  private final JointSubsystem elbow = new JointSubsystem(11, 6, false, 0, 0.01, 0.01, 0.00, MotorType.SparkMax,
-      EncoderType.CANCoder);
-  private final JointSubsystem shoulder = new JointSubsystem(12, 5, true, 0, 0.043, 0.0000, 0.0000, MotorType.SparkMax,
-      EncoderType.CANCoder);
+  private final JointSubsystem elbow = new JointSubsystem(11, 6, false, 0, 0.01, 0.01, 0.00, MotorType.SparkMax);
+  private final JointSubsystem shoulder = new JointSubsystem(12, 5, true, 0, 0.043, 0.0000, 0.0000, MotorType.SparkMax);
   private final RevolverSubsystem revolver = new RevolverSubsystem(13, 1);
   public HornSubsystem horn = new HornSubsystem(16, 7, 15);
   public CannonSubsystem tCannon = new CannonSubsystem(16, 6);
-
-  private InstantCommand[] goToPositionCommand = new InstantCommand[2];
 
   private final CommandPS4Controller driverXbox = new CommandPS4Controller(0);
 
@@ -67,12 +56,25 @@ public class RobotContainer {
     driverXbox.R1().and(driverXbox.L1()).whileTrue(horn.generateHoldCommand());
     driverXbox.R2().and(driverXbox.L1()).onTrue(tCannon.generateFireCommand());
 
+    // Reload the revolver to the next slot when the cross button is pressed
     driverXbox.cross().onTrue(new InstantCommand((() -> revolver.nextSlot())));
 
+    // allow the arm to move up and down with the D-pad
     driverXbox.povDown().whileTrue(new RunCommand(() -> manualArmControl(true), shoulder, elbow));
     driverXbox.povUp().whileTrue(new RunCommand(() -> manualArmControl(false), shoulder, elbow));
-    
-    driverXbox.povLeft().onTrue(goToPositionCommand[0]);
+
+    // preset positions for the arm in resting or firing modes
+    driverXbox.povLeft().onTrue(
+        new InstantCommand(() -> {
+          shoulder.setSetpoint(ArmConstants.positions[0].getShoulderPos() / 360.0);
+          elbow.setSetpoint(ArmConstants.positions[0].getElbowPos() / 360.0);
+        }, shoulder, elbow));
+
+    driverXbox.povRight().onTrue(
+        new InstantCommand(() -> {
+          shoulder.setSetpoint(ArmConstants.positions[1].getShoulderPos() / 360.0);
+          elbow.setSetpoint(ArmConstants.positions[1].getElbowPos() / 360.0);
+        }, shoulder, elbow));
   }
 
   private void configureArmSystems() {
@@ -87,15 +89,6 @@ public class RobotContainer {
     // Commented out for safety: don't move the joints automatically at startup
     // shoulder.setSetpoint(shoulder.getAngleDegrees() / 360.0);
     // elbow.setSetpoint(elbow.getAngleDegrees() / 360.0);
-
-    // Pre-build commands for named positions
-    for (int i = 0; i < ArmConstants.positions.length; i++) {
-      final int index = i;
-      goToPositionCommand[i] = new InstantCommand(() -> {
-        shoulder.setSetpoint(ArmConstants.positions[index].getShoulderPos() / 360.0);
-        elbow.setSetpoint(ArmConstants.positions[index].getElbowPos() / 360.0);
-      });
-    }
   }
 
   public void manualArmControl(boolean reversed) {
