@@ -36,4 +36,6 @@ public class SparkMaxMotor implements MotorController {
         config.idleMode(mode == Motor.IdleMode.Brake ? IdleMode.kBrake : IdleMode.kCoast);
         motor.configure(config, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     }
+
+    public int getDeviceId() { return motor.getDeviceId(); }
 }

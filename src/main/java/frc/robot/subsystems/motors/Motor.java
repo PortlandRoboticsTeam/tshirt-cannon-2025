@@ -18,4 +18,5 @@ public class Motor {
     public double getVoltage() { return controller.getVoltage(); }
     public void invert() { controller.invert(); }
     public void setNeutralMode(IdleMode mode) { controller.setNeutralMode(mode); }
+    public int getDeviceId() { return controller.getDeviceId();}
 }

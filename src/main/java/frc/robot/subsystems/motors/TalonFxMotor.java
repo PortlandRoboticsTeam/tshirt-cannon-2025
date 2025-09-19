@@ -30,4 +30,6 @@ public class TalonFxMotor implements MotorController {
     public void setNeutralMode(Motor.IdleMode mode) {
         motor.setNeutralMode(mode == Motor.IdleMode.Brake ? NeutralModeValue.Brake : NeutralModeValue.Coast);
     }
+
+    public int getDeviceId() { return motor.getDeviceID(); }
 }

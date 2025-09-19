@@ -5,4 +5,5 @@ public interface MotorController {
     double getVoltage();
     void invert();
     void setNeutralMode(Motor.IdleMode mode);
+    int getDeviceId();
 }

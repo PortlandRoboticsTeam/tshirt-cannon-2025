@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
@@ -20,19 +21,10 @@ public class JointSubsystem extends SubsystemBase {
     private boolean isBounded = false;
     private boolean PIDEnabled = true;
 
-    public JointSubsystem(
-            int motorID,
-            int encoderID,
-            boolean inverted,
-            int defaultSetpoint,
-            double kP, double kI, double kD,
-            MotorType motorType) {
-
-        pid = new PIDController(kP, kI, kD);
-        pid.enableContinuousInput(-180, 180); // good for arm joints rotating continuously
+    public JointSubsystem(int motorID, int encoderID,boolean inverted) {
+        pid = new PIDController(0.8, 0.0, 0.05);
         this.encoder = new Encoder(encoderID);
-        this.motor = new Motor(motorID, motorType);
-        this.setpoint = defaultSetpoint;
+        this.motor = new Motor(motorID, MotorType.SparkMax);
         this.inverted = inverted;
     }
 
@@ -134,6 +126,8 @@ public class JointSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        SmartDashboard.putNumber("Motor Id " + motor.getDeviceId() + " Setpoint", encoder.getAngleDegrees());
+
         if (PIDEnabled) {
             if (!isNearSetpoint(1.0)) { // 1° tolerance, adjust if needed
                 double output = pid.calculate(getAngleDegrees(), setpoint);
