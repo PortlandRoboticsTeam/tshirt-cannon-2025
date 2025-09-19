@@ -25,7 +25,7 @@ public class RobotContainer {
   // private final JointSubsystem elbow = new JointSubsystem(11, 6, false);
   // private final JointSubsystem shoulder = new JointSubsystem(12, 15, true);
   private final RevolverSubsystem revolver = new RevolverSubsystem(13, 17);
-  public HornSubsystem horn = new HornSubsystem(16, 7, 15);
+  public HornSubsystem horn = new HornSubsystem(16, 7);
   public CannonSubsystem tCannon = new CannonSubsystem(16, 6);
 
   private final CommandPS4Controller controller = new CommandPS4Controller(0);
@@ -52,7 +52,8 @@ public class RobotContainer {
     controller.button(5).onTrue(zeroGyro);
 
     // Both the cannon and horn are only activated when the safety (L1) is held
-    controller.R1().and(controller.L1()).whileTrue(horn.generateHoldCommand());
+    controller.R1().and(controller.L1()).whileTrue(new RunCommand(horn::activateHorn, horn));
+    controller.R1().and(controller.L1()).onFalse(new InstantCommand(horn::stopHorn, horn));
     controller.R2().and(controller.L1()).onTrue(tCannon.generateFireCommand());
 
     // Reload the revolver to the next slot when the cross button is pressed
