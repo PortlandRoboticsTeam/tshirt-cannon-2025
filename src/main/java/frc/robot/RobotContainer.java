@@ -58,12 +58,8 @@ public class RobotContainer {
 
     // Reload the revolver to the next slot when the cross button is pressed
     // driverXbox.cross().onTrue(new InstantCommand((() -> revolver.nextSlot())));
-    controller.cross().onTrue(new InstantCommand(() -> {
-      revolver.nextSlot();
-    }));
-    controller.circle().onTrue(new InstantCommand(() -> {
-      revolver.stop();
-    }));
+    controller.cross().onTrue(new InstantCommand(() -> revolver.nextSlot()));
+    controller.circle().onTrue(new InstantCommand(() -> revolver.stop()));
 
     // // allow the arm to move up and down with the D-pad
     // driverXbox.povDown().whileTrue(new RunCommand(() -> manualArmControl(true),
@@ -78,7 +74,7 @@ public class RobotContainer {
     // elbow.setSetpoint(ArmConstants.positions[0].getElbowPos() / 360.0);
     // }, shoulder, elbow));
 
-    // driverXbox.povRight().onTrue(
+    // driverXbox.povRight().onTru  e(
     // new InstantCommand(() -> {
     // shoulder.setSetpoint(ArmConstants.positions[1].getShoulderPos() / 360.0);
     // elbow.setSetpoint(ArmConstants.positions[1].getElbowPos() / 360.0);
