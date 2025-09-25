@@ -10,12 +10,13 @@ public class RevolverSubsystem extends SubsystemBase {
     private static final int SLOT_COUNT = 6;
     private static final double rotationPerSlot = 1.0 / SLOT_COUNT;
 
-    private static final double kP = 0.75;              // proportional gain - strength of response to error
-    private static final double kI = 0.0;               // integral gain - strength of response to accumulated error over time
-    private static final double kD = 0.05;             // derivative gain - strength of response to rate of change of error
+    private static final double kP = 0.75;  // proportional gain - strength of response to error
+    private static final double kI = 0.0;   // integral gain - strength of response to accumulated error over time
+    private static final double kD = 0.05;  // derivative gain - strength of response to rate of change of error
 
-    private static final double DEADBAND = 0.005;       // ~1.8° threshold (stopping)
+    private static final double DEADBAND = 0.005;
 
+    private static final double MIN_FEEDFORWARD = 0.2;
     private static final double OUTPUT_SCALE = 1.0;
     private static final double MAX_OUTPUT = 1.0;
 
@@ -50,7 +51,13 @@ public class RevolverSubsystem extends SubsystemBase {
         double target = getTargetPosition();
 
         // Calculate motor motion required to reach target, apply scaling and clamp
-        double output = pid.calculate(encoderPosition, target) * OUTPUT_SCALE;
+        double rawPidWithScaling = pid.calculate(encoderPosition, target) * OUTPUT_SCALE;
+
+        double output = rawPidWithScaling;
+        if (Math.abs(rawPidWithScaling) > 1e-9 && Math.abs(rawPidWithScaling) < MIN_FEEDFORWARD) {
+            output = Math.copySign(MIN_FEEDFORWARD, rawPidWithScaling);
+        }
+
         output = Math.max(-MAX_OUTPUT, Math.min(MAX_OUTPUT, output));
         double error = pid.getError();
 
