@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 
 public class CannonSubsystem extends SubsystemBase {
     private final Solenoid solenoid;
-    private static final double DURATION = 1; // seconds
+    private static final double DURATION = 0.25; // seconds
 
     public CannonSubsystem(int moduleID, int channel) {
         solenoid = new Solenoid(moduleID, PneumaticsModuleType.REVPH, channel);
