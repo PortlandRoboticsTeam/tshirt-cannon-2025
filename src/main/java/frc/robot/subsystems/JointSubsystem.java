@@ -19,7 +19,7 @@ public class JointSubsystem extends SubsystemBase {
     private final boolean inverted;
     private double minPosition, maxPosition;
     private boolean isBounded = false;
-    private boolean PIDEnabled = true;
+    private boolean PIDEnabled = false;
 
     public JointSubsystem(int motorID, int encoderID,boolean inverted) {
         pid = new PIDController(0.8, 0.0, 0.05);
@@ -127,10 +127,12 @@ public class JointSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         SmartDashboard.putNumber("Motor Id " + motor.getDeviceId() + " Setpoint", encoder.getAngleDegrees());
-
+        double output = pid.calculate(getAngleDegrees(), setpoint);
+        SmartDashboard.putNumber("shoulder calculation",output);
+        SmartDashboard.putNumber("shoulder setpoint",setpoint);
         if (PIDEnabled) {
             if (!isNearSetpoint(1.0)) { // 1° tolerance, adjust if needed
-                double output = pid.calculate(getAngleDegrees(), setpoint);
+                
                 setSpeed(output);
             } else {
                 stop();

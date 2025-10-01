@@ -22,7 +22,7 @@ public class RobotContainer {
   public Command zeroGyro = drivebase.getResetGyro();
 
   // private final JointSubsystem elbow = new JointSubsystem(11, 6, false);
-  // private final JointSubsystem shoulder = new JointSubsystem(12, 15, true);
+  private final JointSubsystem shoulder = new JointSubsystem(12, 15, true);
   private final RevolverSubsystem revolver = new RevolverSubsystem(13, 17);
   public HornSubsystem horn = new HornSubsystem(16, 7);
   public CannonSubsystem tCannon = new CannonSubsystem(16, 6);
