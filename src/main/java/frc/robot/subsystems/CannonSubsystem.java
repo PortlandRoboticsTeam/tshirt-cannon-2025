@@ -7,14 +7,13 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.RobotContainer;
 
 public class CannonSubsystem extends SubsystemBase {
-    private final Solenoid solenoid;
     private static final double DURATION = 0.25; // seconds
 
-    public CannonSubsystem(int moduleID, int channel) {
-        solenoid = new Solenoid(moduleID, PneumaticsModuleType.REVPH, channel);
-    }
+    private final Solenoid solenoid = new Solenoid(
+        RobotContainer.CANNON_MOTOR_ID, PneumaticsModuleType.REVPH, RobotContainer.CANNON_PNEUMATIC_CHANNEL_ID);
 
     public void fire() {
         solenoid.set(true);
@@ -24,11 +23,12 @@ public class CannonSubsystem extends SubsystemBase {
         solenoid.set(false);
     }
 
-    public Command generateFireCommand() {
+    public Command fireCommand(Command revolverNextSlot) {
         return new SequentialCommandGroup(
             new InstantCommand(this::fire, this),
             new WaitCommand(DURATION),
-            new InstantCommand(this::stopFiring, this)
+            new InstantCommand(this::stopFiring, this),
+            revolverNextSlot
         );
     }
 }

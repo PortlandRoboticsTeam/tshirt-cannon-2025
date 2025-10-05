@@ -1,105 +1,73 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
 import frc.robot.subsystems.motors.Motor;
 import frc.robot.subsystems.motors.Motor.MotorType;
 
 public class RevolverSubsystem extends SubsystemBase {
     private static final int SLOT_COUNT = 6;
     private static final double rotationPerSlot = 1.0 / SLOT_COUNT;
-
-    private static final double kP = 0.75;  // proportional gain - strength of response to error
-    private static final double kI = 0.0;   // integral gain - strength of response to accumulated error over time
-    private static final double kD = 0.05;  // derivative gain - strength of response to rate of change of error
-
     private static final double DEADBAND = 0.005;
-
     private static final double MIN_FEEDFORWARD = 0.2;
-    private static final double OUTPUT_SCALE = 1.0;
     private static final double MAX_OUTPUT = 1.0;
 
-    private final Motor motor;
-    private final Encoder encoder;
-    private final PIDController pid;
+    private final Motor motor = new Motor(RobotContainer.REVOLVER_MOTOR_ID, MotorType.SparkMax);
+    private final Encoder encoder = new Encoder(RobotContainer.REVOLVER_ENCODER_ID);
 
     private int currentSlot = 0;
+    private boolean motorActive = false;
 
-    private boolean pidActive = false;
-
-    public RevolverSubsystem(int motorID, int encoderID) {
-        this.motor = new Motor(motorID, MotorType.SparkMax);
-        this.encoder = new Encoder(encoderID);
-
-        this.pid = new PIDController(kP, kI, kD);
-        pid.enableContinuousInput(0.0, 1.0);
-
-        // Snap to nearest slot on startup
-        double encoderPosition = getNormalizedRotation();
+    /**
+     * Snap to nearest slot on startup
+     */
+    public RevolverSubsystem() {
+        double encoderPosition = encoder.getNormalizedRotation();
         currentSlot = (int) Math.round(encoderPosition / rotationPerSlot) % SLOT_COUNT;
-
-    }
-
-    public void stop() {
-        pidActive = false;
     }
 
     @Override
     public void periodic() {
-        double encoderPosition = getNormalizedRotation();
+        // read current and target position
+        double encoderPosition = encoder.getNormalizedRotation();
         double target = getTargetPosition();
+        double error = target - encoderPosition;
 
-        // Calculate motor motion required to reach target, apply scaling and clamp
-        double rawPidWithScaling = pid.calculate(encoderPosition, target) * OUTPUT_SCALE;
-
-        double output = rawPidWithScaling;
-        if (Math.abs(rawPidWithScaling) > 1e-9 && Math.abs(rawPidWithScaling) < MIN_FEEDFORWARD) {
-            output = Math.copySign(MIN_FEEDFORWARD, rawPidWithScaling);
-        }
-
+        // calculate output with min to overcome static friction and clamp for saftey
+        double output = Math.copySign(MIN_FEEDFORWARD, error);
         output = Math.max(-MAX_OUTPUT, Math.min(MAX_OUTPUT, output));
-        double error = pid.getError();
 
         if (Math.abs(error) < DEADBAND) {
-            pidActive = false;
+            motorActive = false;
         }
 
-        SmartDashboard.putNumber("Revolver Measurement", encoderPosition);
+        // log all calculations for debugging/tuning
+        SmartDashboard.putNumber("Revolver Position", encoderPosition);
         SmartDashboard.putNumber("Revolver Target", target);
-        SmartDashboard.putNumber("Revolver PID Output", output);
         SmartDashboard.putNumber("Revolver Error", error);
-        SmartDashboard.putBoolean("Pid Active", pidActive);
+        SmartDashboard.putNumber("Revolver Output", output);
+        SmartDashboard.putBoolean("Revolver Active", motorActive);
 
-        if (!pidActive) {
-            motor.set(0);
-            return;
-        }
-
-        motor.set(output * -1);
+        // when active, run motor to correct position; otherwise stop
+        motor.set(motorActive ? output * -1 : 0);
     }
 
-    public void nextSlot() {
-        currentSlot = (currentSlot + 1) % SLOT_COUNT;
-        pidActive = true;
+    public Command nextSlot() {
+        return new InstantCommand(() -> {
+            currentSlot = (currentSlot + 1) % SLOT_COUNT;
+            motorActive = true;
+        });
+    }
+
+    public Command stop() {
+        return new InstantCommand(() -> motorActive = false);
     }
 
     private double getTargetPosition() {
         return currentSlot * rotationPerSlot;
-    }
-
-    /**
-     * Normalizes any encoder rotation value to a fractional rotation in [0.0, 1.0).
-     * <p>
-     * The revolver is a circular mechanism, so we only care about the position
-     * within a single rotation. This method wraps any value, positive or negative,
-     * into the [0.0, 1.0) range.
-     *
-     * @param encoderValue The raw rotation count from the encoder (can be negative or >1)
-     * @return The normalized fractional rotation in the range [0.0, 1.0)
-     */
-    private double getNormalizedRotation() {
-        return (encoder.getValue() % 1.0 + 1.0) % 1.0;
     }
 
 }

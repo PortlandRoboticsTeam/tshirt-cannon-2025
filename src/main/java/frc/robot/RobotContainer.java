@@ -1,13 +1,7 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.subsystems.*;
 
@@ -15,17 +9,32 @@ import frc.robot.subsystems.*;
  * Configures button mappings and subsystems for the robots.
  */
 public class RobotContainer {
+  private static final double DEADBAND = 0.1;
 
-  // The robot's subsystems and commands are defined here...
+  // Arm subsystem
+  public static final int SHOULDER_MOTOR_ID = 11;
+  public static final int SHOULDER_ENCODER_ID = 6;
+  public static final int ELBOW_MOTOR_ID = 12;
+  public static final int ELBOW_ENCODER_ID = 15;
+
+  // Revolver subsystem
+  public static final int REVOLVER_MOTOR_ID = 13;
+  public static final int REVOLVER_ENCODER_ID = 17;
+
+  // Horn subsystem
+  public static final int HORN_MOTOR_ID = 16;
+  public static final int HORN_PNEUMATIC_CHANNEL_ID = 7;
+
+  // Cannon subsystem
+  public static final int CANNON_MOTOR_ID = 16;
+  public static final int CANNON_PNEUMATIC_CHANNEL_ID = 6;
+
+  // Subsystems
   private final SwerveSubsystem drivebase = new SwerveSubsystem();
-
-  public Command zeroGyro = drivebase.getResetGyro();
-
-  // private final JointSubsystem elbow = new JointSubsystem(11, 6, false);
-  private final JointSubsystem shoulder = new JointSubsystem(12, 15, true);
-  private final RevolverSubsystem revolver = new RevolverSubsystem(13, 17);
-  public HornSubsystem horn = new HornSubsystem(16, 7);
-  public CannonSubsystem tCannon = new CannonSubsystem(16, 6);
+  private final ArmSubsystem arm = new ArmSubsystem();
+  private final RevolverSubsystem revolver = new RevolverSubsystem();
+  private final HornSubsystem horn = new HornSubsystem();
+  private final CannonSubsystem tCannon = new CannonSubsystem();
 
   private final CommandPS4Controller controller = new CommandPS4Controller(0);
 
@@ -33,73 +42,32 @@ public class RobotContainer {
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
-    // configureArmSystems();
-    configureBindings();
-
     Command driveCommand = drivebase.driveCommand(
-        () -> -MathUtil.applyDeadband(controller.getLeftY(), Constants.DEADBAND),
-        () -> -MathUtil.applyDeadband(controller.getLeftX(), Constants.DEADBAND),
-        () -> -MathUtil.applyDeadband(controller.getRightX(), Constants.DEADBAND),
+        () -> -MathUtil.applyDeadband(controller.getLeftY(), DEADBAND),
+        () -> -MathUtil.applyDeadband(controller.getLeftX(), DEADBAND),
+        () -> -MathUtil.applyDeadband(controller.getRightX(), DEADBAND),
         () -> 0);
     drivebase.setDefaultCommand(driveCommand);
-  }
-
-  /**
-   * Binds the controls on the xbox controller to commands on the robot.
-   */
-  private void configureBindings() {
-    controller.button(5).onTrue(zeroGyro);
 
     // Both the cannon and horn are only activated when the safety (L1) is held
-    controller.R1().and(controller.L1()).whileTrue(new RunCommand(horn::activateHorn, horn));
-    controller.R1().and(controller.L1()).onFalse(new InstantCommand(horn::stopHorn, horn));
-    controller.R2().and(controller.L1()).onTrue(tCannon.generateFireCommand());
+    controller.R1().and(controller.L1()).onTrue(horn.activateHorn());
+    controller.R1().and(controller.L1()).onFalse(horn.stopHorn());
+
+    //after firing, the cannon will automatically revolve to the next slot
+    controller.R2().and(controller.L1()).onTrue(tCannon.fireCommand(revolver.nextSlot()));
 
     // Reload the revolver to the next slot when the cross button is pressed
-    // driverXbox.cross().onTrue(new InstantCommand((() -> revolver.nextSlot())));
-    controller.cross().onTrue(new InstantCommand(() -> revolver.nextSlot()));
-    controller.circle().onTrue(new InstantCommand(() -> revolver.stop()));
+    controller.cross().onTrue(revolver.nextSlot());
+    controller.circle().onTrue(revolver.stop());
 
-    // // allow the arm to move up and down with the D-pad
-    // driverXbox.povDown().whileTrue(new RunCommand(() -> manualArmControl(true),
-    // shoulder, elbow));
-    // driverXbox.povUp().whileTrue(new RunCommand(() -> manualArmControl(false),
-    // shoulder, elbow));
+    // D-Pad left/right to fully extend or retract the arm, stop movement by pressing up/down briefly
+    controller.povLeft().onTrue(arm.retract());
+    controller.povRight().onTrue(arm.extend());
 
-    // // preset positions for the arm in resting or firing modes
-    // driverXbox.povLeft().onTrue(
-    // new InstantCommand(() -> {
-    // shoulder.setSetpoint(ArmConstants.positions[0].getShoulderPos() / 360.0);
-    // elbow.setSetpoint(ArmConstants.positions[0].getElbowPos() / 360.0);
-    // }, shoulder, elbow));
-
-    // driverXbox.povRight().onTru  e(
-    // new InstantCommand(() -> {
-    // shoulder.setSetpoint(ArmConstants.positions[1].getShoulderPos() / 360.0);
-    // elbow.setSetpoint(ArmConstants.positions[1].getElbowPos() / 360.0);
-    // }, shoulder, elbow));
+    // holding up/down on the D-Pad will extend/retract the arm, releasing will stop
+    controller.povUp().onTrue(arm.extend());
+    controller.povUp().onFalse(arm.stop());
+    controller.povDown().onTrue(arm.retract());
+    controller.povDown().onFalse(arm.stop());
   }
-
-  // private void configureArmSystems() {
-  // // Apply bounds
-  // shoulder.applyBounds(ArmConstants.shoulderMin / 360.0,
-  // ArmConstants.shoulderMax / 360.0);
-  // elbow.applyBounds(ArmConstants.elbowMin / 360.0, ArmConstants.elbowMax /
-  // 360.0);
-
-  // // Set encoder offsets (degrees -> rotations)
-  // shoulder.getEncoder().setOffset(ArmConstants.shoulderOffset / 360.0);
-  // elbow.getEncoder().setOffset(ArmConstants.elbowOffset / 360.0);
-
-  // // Commented out for safety: don't move the joints automatically at startup
-  // // shoulder.setSetpoint(shoulder.getAngleDegrees() / 360.0);
-  // // elbow.setSetpoint(elbow.getAngleDegrees() / 360.0);
-  // }
-
-  // public void manualArmControl(boolean reversed) {
-  // double delta = (reversed ? -1 : 1) * 2.0 / 360.0; // ~2 degrees per press
-  // shoulder.setSetpoint(shoulder.getSetpoint() + delta);
-  // elbow.setSetpoint(elbow.getSetpoint() + delta);
-  // }
-
 }

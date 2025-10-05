@@ -4,30 +4,28 @@ import java.io.File;
 import java.io.IOException;
 import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants;
 import swervelib.SwerveDrive;
-import swervelib.imu.SwerveIMU;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
+import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
 public class SwerveSubsystem extends SubsystemBase {
+    private static final double MAXIMUM_SPEED = Units.feetToMeters(4);
+    private static final TelemetryVerbosity TELEMETRY_VERBOSITY = TelemetryVerbosity.LOW;
+
     private final SwerveDrive swerveDrive;
-    private double speedControl = 1.0;
 
     public SwerveSubsystem() {
         try {
             File swerveJsonDirectory = new File(Filesystem.getDeployDirectory(), "swerve/neo");
-            SwerveDriveTelemetry.verbosity = Constants.telemetryVerbosity;
-            swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(Constants.maximumSpeed);
+            SwerveDriveTelemetry.verbosity = TELEMETRY_VERBOSITY;
+            swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(MAXIMUM_SPEED);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load swerve config", e);
         }
@@ -47,7 +45,7 @@ public class SwerveSubsystem extends SubsystemBase {
             DoubleSupplier angularRotationX,
             DoubleSupplier speedController) {
         return run(() -> {
-            speedControl = speedController.getAsDouble() / 2 + 0.8;
+            double speedControl = speedController.getAsDouble() / 2 + 0.8;
             swerveDrive.drive(
                     new Translation2d(
                             translationX.getAsDouble() * swerveDrive.getMaximumChassisVelocity() * speedControl,
@@ -62,34 +60,5 @@ public class SwerveSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         swerveDrive.updateOdometry();
-    }
-
-    /** Reset gyro heading to zero. */
-    public Command getResetGyro() {
-        return new InstantCommand(() -> swerveDrive.zeroGyro(), this);
-    }
-
-    public Pose2d getPose() {
-        return swerveDrive.getPose();
-    }
-
-    public void resetOdometry(Pose2d pose) {
-        swerveDrive.resetOdometry(pose);
-    }
-
-    public Rotation2d getHeading() {
-        return getPose().getRotation();
-    }
-
-    public ChassisSpeeds getRobotVelocity() {
-        return swerveDrive.getRobotVelocity();
-    }
-
-    public SwerveIMU getGyro() {
-        return swerveDrive.getGyro();
-    }
-
-    public SwerveDrive getDriveTrain() {
-        return swerveDrive;
     }
 }

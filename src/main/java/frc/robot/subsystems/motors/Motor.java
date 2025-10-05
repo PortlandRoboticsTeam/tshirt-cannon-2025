@@ -1,6 +1,6 @@
 package frc.robot.subsystems.motors;
 
-public class Motor {
+public class Motor implements MotorController {
     public enum MotorType { SparkMax, Talon }
     public enum IdleMode { Brake, Coast }
 

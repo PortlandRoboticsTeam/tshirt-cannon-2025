@@ -10,28 +10,21 @@ public class Encoder {
         cancoder = new CANcoder(id);
     }
 
-    /** Returns raw rotations */
     public double getValue() {
         return cancoder.getPosition().getValueAsDouble() - offset;
     }
 
-    /** Returns angle in degrees (0–360) */
-    public double getAngleDegrees() {
-        return getValue() * 360 % 360;
-    }
-
-    /** Set an offset so zero is at a specific position */
-    public void setOffset(double offset) {
-        this.offset = offset;
-    }
-
-    /** Set zero to a specific position */
-    public void setOffsetTo(double newOffset) {
-        offset = getValue() - newOffset;
-    }
-
-    /** Returns true if encoder is connected */
-    public boolean isConnected() {
-        return cancoder.isConnected();
+    /**
+     * Normalizes any encoder rotation value to a fractional rotation in [0.0, 1.0).
+     * <p>
+     * The revolver is a circular mechanism, so we only care about the position
+     * within a single rotation. This method wraps any value, positive or negative,
+     * into the [0.0, 1.0) range.
+     *
+     * @param encoderValue The raw rotation count from the encoder (can be negative or >1)
+     * @return The normalized fractional rotation in the range [0.0, 1.0)
+     */
+    public double getNormalizedRotation() {
+        return (getValue() % 1.0 + 1.0) % 1.0;
     }
 }
