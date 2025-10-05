@@ -13,7 +13,9 @@ public class CannonSubsystem extends SubsystemBase {
     private static final double DURATION = 0.25; // seconds
 
     private final Solenoid solenoid = new Solenoid(
-        RobotContainer.CANNON_MOTOR_ID, PneumaticsModuleType.REVPH, RobotContainer.CANNON_PNEUMATIC_CHANNEL_ID);
+        RobotContainer.PNEUMATIC_CONTROLLER_ID, 
+        PneumaticsModuleType.REVPH,
+         RobotContainer.CANNON_PNEUMATIC_CHANNEL_ID);
 
     public void fire() {
         solenoid.set(true);

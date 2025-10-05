@@ -11,23 +11,17 @@ import frc.robot.subsystems.*;
 public class RobotContainer {
   private static final double DEADBAND = 0.1;
 
-  // Arm subsystem
+  // Can and Pneumatic IDs
   public static final int SHOULDER_MOTOR_ID = 11;
-  public static final int SHOULDER_ENCODER_ID = 6;
   public static final int ELBOW_MOTOR_ID = 12;
-  public static final int ELBOW_ENCODER_ID = 15;
-
-  // Revolver subsystem
   public static final int REVOLVER_MOTOR_ID = 13;
+  public static final int ELBOW_ENCODER_ID = 15;
+  public static final int PNEUMATIC_CONTROLLER_ID = 16;
   public static final int REVOLVER_ENCODER_ID = 17;
+  public static final int SHOULDER_ENCODER_ID = 18;
 
-  // Horn subsystem
-  public static final int HORN_MOTOR_ID = 16;
-  public static final int HORN_PNEUMATIC_CHANNEL_ID = 7;
-
-  // Cannon subsystem
-  public static final int CANNON_MOTOR_ID = 16;
   public static final int CANNON_PNEUMATIC_CHANNEL_ID = 6;
+  public static final int HORN_PNEUMATIC_CHANNEL_ID = 7;
 
   // Subsystems
   private final SwerveSubsystem drivebase = new SwerveSubsystem();

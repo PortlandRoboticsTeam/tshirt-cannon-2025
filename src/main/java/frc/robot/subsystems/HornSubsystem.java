@@ -9,7 +9,9 @@ import frc.robot.RobotContainer;
 
 public class HornSubsystem extends SubsystemBase {
     private final Solenoid solenoid = new Solenoid(
-        RobotContainer.HORN_MOTOR_ID, PneumaticsModuleType.REVPH, RobotContainer.HORN_PNEUMATIC_CHANNEL_ID);
+        RobotContainer.PNEUMATIC_CONTROLLER_ID, 
+        PneumaticsModuleType.REVPH, 
+        RobotContainer.HORN_PNEUMATIC_CHANNEL_ID);
 
     public Command activateHorn() {
         return new InstantCommand(() -> solenoid.set(true));
