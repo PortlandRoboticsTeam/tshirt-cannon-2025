@@ -17,14 +17,13 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
 public class SwerveSubsystem extends SubsystemBase {
     private static final double MAXIMUM_SPEED = Units.feetToMeters(4);
-    private static final TelemetryVerbosity TELEMETRY_VERBOSITY = TelemetryVerbosity.LOW;
-
     private final SwerveDrive swerveDrive;
 
     public SwerveSubsystem() {
+        SwerveDriveTelemetry.verbosity = TelemetryVerbosity.LOW;
+
         try {
             File swerveJsonDirectory = new File(Filesystem.getDeployDirectory(), "swerve/neo");
-            SwerveDriveTelemetry.verbosity = TELEMETRY_VERBOSITY;
             swerveDrive = new SwerveParser(swerveJsonDirectory).createSwerveDrive(MAXIMUM_SPEED);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load swerve config", e);
@@ -37,24 +36,16 @@ public class SwerveSubsystem extends SubsystemBase {
      * @param translationX     Forward/backward input
      * @param translationY     Left/right input
      * @param angularRotationX Rotation input
-     * @param speedController  Speed scaling input
      * @return Drive command
      */
-    public Command driveCommand(DoubleSupplier translationX,
-            DoubleSupplier translationY,
-            DoubleSupplier angularRotationX,
-            DoubleSupplier speedController) {
-        return run(() -> {
-            double speedControl = speedController.getAsDouble() / 2 + 0.8;
-            swerveDrive.drive(
-                    new Translation2d(
-                            translationX.getAsDouble() * swerveDrive.getMaximumChassisVelocity() * speedControl,
-                            translationY.getAsDouble() * swerveDrive.getMaximumChassisVelocity() * speedControl),
-                    angularRotationX.getAsDouble() * swerveDrive.getMaximumChassisAngularVelocity(),
-                    false, // 🚫 Robot-oriented only (no field-relative)
-                    false // Open loop
-            );
-        });
+    public Command driveCommand(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier angularRotationX) {
+        return run(() -> swerveDrive.drive(
+            new Translation2d(
+                    translationX.getAsDouble() * swerveDrive.getMaximumChassisVelocity(),
+                    translationY.getAsDouble() * swerveDrive.getMaximumChassisVelocity()),
+            angularRotationX.getAsDouble() * swerveDrive.getMaximumChassisAngularVelocity(),
+            false,
+            false));
     }
 
     @Override

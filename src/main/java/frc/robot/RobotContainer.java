@@ -1,7 +1,6 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.subsystems.*;
 
@@ -36,12 +35,10 @@ public class RobotContainer {
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
-    Command driveCommand = drivebase.driveCommand(
+    drivebase.setDefaultCommand(drivebase.driveCommand(
         () -> -MathUtil.applyDeadband(controller.getLeftY(), DEADBAND),
         () -> -MathUtil.applyDeadband(controller.getLeftX(), DEADBAND),
-        () -> -MathUtil.applyDeadband(controller.getRightX(), DEADBAND),
-        () -> 0);
-    drivebase.setDefaultCommand(driveCommand);
+        () -> -MathUtil.applyDeadband(controller.getRightX(), DEADBAND)));
 
     // Both the cannon and horn are only activated when the safety (L1) is held
     controller.R1().and(controller.L1()).onTrue(horn.activateHorn());
