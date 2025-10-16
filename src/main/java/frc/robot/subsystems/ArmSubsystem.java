@@ -16,16 +16,16 @@ public class ArmSubsystem extends SubsystemBase {
     private static final int MOTOR_FORWARD = 1;
     private static final int MOTOR_REVERSE = -1;
 
-    private static final double MIN_SHOULDER_POSITION = 0.1;
-    private static final double MAX_SHOULDER_POSITION = 0.6;
-    private static final double MIN_ELBOW_POSITION = 0.5;
+    private static final double MIN_SHOULDER_POSITION = 0.018;
+    private static final double MAX_SHOULDER_POSITION = 0.082;
+    private static final double MIN_ELBOW_POSITION = 0.48;
     private static final double MAX_ELBOW_POSITION = 0.6;
 
     private final ArmJoint shoulder = new ArmJoint(
         "Shoulder",
         MotorPool.create(RobotContainer.SHOULDER_MOTOR_ID, MotorType.SparkMax),
         new Encoder(RobotContainer.SHOULDER_ENCODER_ID),
-        new PIDController(0.8, 0.0, 0.05),
+        new PIDController(3.5, 0.0, 0.1),
         MOTOR_REVERSE,
         MIN_SHOULDER_POSITION, 
         MAX_SHOULDER_POSITION);
@@ -34,7 +34,7 @@ public class ArmSubsystem extends SubsystemBase {
         "Elbow",
         MotorPool.create(RobotContainer.ELBOW_MOTOR_ID, MotorType.SparkMax),
         new Encoder(RobotContainer.ELBOW_ENCODER_ID),
-        new PIDController(0.8, 0.0, 0.05),
+        new PIDController(3.5, 0.0, 0.1),
         MOTOR_FORWARD,
         MIN_ELBOW_POSITION, 
         MAX_ELBOW_POSITION);
