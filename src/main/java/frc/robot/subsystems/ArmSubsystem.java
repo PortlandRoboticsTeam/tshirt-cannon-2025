@@ -5,25 +5,25 @@ import java.util.stream.Stream;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.motors.Motor;
-import frc.robot.subsystems.motors.Motor.MotorType;
+import frc.robot.subsystems.motors.MotorPool;
+import frc.robot.subsystems.motors.MotorPool.MotorType;
 
 public class ArmSubsystem extends SubsystemBase {
     private static final double MAX_MOTOR_OUTPUT = 1.0;
     private static final int MOTOR_FORWARD = 1;
     private static final int MOTOR_REVERSE = -1;
 
-    private static final double MIN_SHOULDER_POSITION = 0.36;
-    private static final double MAX_SHOULDER_POSITION = 0.75;
-    private static final double MIN_ELBOW_POSITION = 0.36;
-    private static final double MAX_ELBOW_POSITION = 0.75;
+    private static final double MIN_SHOULDER_POSITION = 0.1;
+    private static final double MAX_SHOULDER_POSITION = 0.6;
+    private static final double MIN_ELBOW_POSITION = 0.5;
+    private static final double MAX_ELBOW_POSITION = 0.6;
 
     private final ArmJoint shoulder = new ArmJoint(
         "Shoulder",
-        new Motor(RobotContainer.SHOULDER_MOTOR_ID, MotorType.SparkMax),
+        MotorPool.create(RobotContainer.SHOULDER_MOTOR_ID, MotorType.SparkMax),
         new Encoder(RobotContainer.SHOULDER_ENCODER_ID),
         new PIDController(0.8, 0.0, 0.05),
         MOTOR_REVERSE,
@@ -32,7 +32,7 @@ public class ArmSubsystem extends SubsystemBase {
 
     private final ArmJoint elbow = new ArmJoint(
         "Elbow",
-        new Motor(RobotContainer.ELBOW_MOTOR_ID, MotorType.SparkMax),
+        MotorPool.create(RobotContainer.ELBOW_MOTOR_ID, MotorType.SparkMax),
         new Encoder(RobotContainer.ELBOW_ENCODER_ID),
         new PIDController(0.8, 0.0, 0.05),
         MOTOR_FORWARD,
@@ -51,7 +51,7 @@ public class ArmSubsystem extends SubsystemBase {
             output = Math.max(-MAX_MOTOR_OUTPUT, Math.min(MAX_MOTOR_OUTPUT, output));
             double error = joint.pid.getError();
 
-            if (Math.abs(error) < 0.005) {
+            if (Math.abs(error) < 0.01) {
                 joint.motorActive = false;
             }
 
@@ -62,13 +62,16 @@ public class ArmSubsystem extends SubsystemBase {
             SmartDashboard.putNumber(joint.name + " Output", output);
             SmartDashboard.putBoolean(joint.name + " Active", joint.motorActive);
 
+            double motorPower = joint.motorActive ? output * joint.motorDirection : 0;
+            SmartDashboard.putNumber(joint.name + " Motor Power", motorPower);
+
             // when active, run motor to correct position; otherwise stop
-            joint.motor.set(joint.motorActive ? output * joint.motorDirection : 0);
+            joint.motor.set(motorPower);
         });    
     }
 
     public Command extend() {
-        return new InstantCommand(() -> {
+        return runOnce(() -> {
             shoulder.pid.setSetpoint(MAX_SHOULDER_POSITION);
             elbow.pid.setSetpoint(MAX_ELBOW_POSITION);
             shoulder.motorActive = true;
@@ -77,7 +80,7 @@ public class ArmSubsystem extends SubsystemBase {
     }
 
     public Command retract() {
-        return new InstantCommand(() -> {
+        return runOnce(() -> {
             shoulder.pid.setSetpoint(MIN_SHOULDER_POSITION);
             elbow.pid.setSetpoint(MIN_ELBOW_POSITION);
             shoulder.motorActive = true;
@@ -86,7 +89,7 @@ public class ArmSubsystem extends SubsystemBase {
     }
 
     public Command stop() {
-        return new InstantCommand(() -> {
+        return runOnce(() -> {
             shoulder.motorActive = false;
             elbow.motorActive = false;
         });
