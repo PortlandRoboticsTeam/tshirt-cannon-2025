@@ -51,14 +51,16 @@ public class RobotContainer {
     controller.cross().onTrue(revolver.nextSlot());
     controller.circle().onTrue(revolver.stop());
 
-    // D-Pad left/right to fully extend or retract the arm, stop movement by pressing up/down briefly
-    controller.povLeft().onTrue(arm.retract());
-    controller.povRight().onTrue(arm.extend());
+    // // D-Pad left/right to fully extend or retract the arm, stop movement by pressing up/down briefly
+    // controller.povLeft().onTrue(arm.retract());
+    // controller.povRight().onTrue(arm.extend());
 
-    // holding up/down on the D-Pad will extend/retract the arm, releasing will stop
-    controller.povUp().onTrue(arm.extend());
-    controller.povUp().onFalse(arm.stop());
-    controller.povDown().onTrue(arm.retract());
-    controller.povDown().onFalse(arm.stop());
+    // // holding up/down on the D-Pad will extend/retract the arm, releasing will stop
+    controller.povLeft().whileTrue(arm.retract());
+    controller.povRight().whileTrue(arm.extend());
+
+    // Holding up/down on the D-pad manually moves the shoulder
+    controller.povUp().whileTrue(arm.moveShoulder(1.0));
+    controller.povDown().whileTrue(arm.moveShoulder(-1.0));
   }
 }

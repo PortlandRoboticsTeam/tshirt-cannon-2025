@@ -16,32 +16,59 @@ public class ArmSubsystem extends SubsystemBase {
     private static final int MOTOR_FORWARD = 1;
     private static final int MOTOR_REVERSE = -1;
 
-    private static final double MIN_SHOULDER_POSITION = 0.018;
-    private static final double MAX_SHOULDER_POSITION = 0.082;
+    private static final double SHOULDER_MANUAL_SPEED = 0.3;
+
+    // No longer needed for shoulder manual control
+    // private static final double MIN_SHOULDER_POSITION = 0.018;
+    // private static final double MAX_SHOULDER_POSITION = 0.082;
+
     private static final double MIN_ELBOW_POSITION = 0.48;
     private static final double MAX_ELBOW_POSITION = 0.6;
 
-    private final ArmJoint shoulder = new ArmJoint(
-        "Shoulder",
-        MotorPool.create(RobotContainer.SHOULDER_MOTOR_ID, MotorType.SparkMax),
-        new Encoder(RobotContainer.SHOULDER_ENCODER_ID),
-        new PIDController(3.5, 0.0, 0.1),
-        MOTOR_REVERSE,
-        MIN_SHOULDER_POSITION, 
-        MAX_SHOULDER_POSITION);
+    // Shoulder no longer uses an encoder or PID controller
+    /*
+     * private final ArmJoint shoulder = new ArmJoint(
+     * "Shoulder",
+     * MotorPool.create(RobotContainer.SHOULDER_MOTOR_ID, MotorType.SparkMax),
+     * new Encoder(RobotContainer.SHOULDER_ENCODER_ID),
+     * new PIDController(3.5, 0.0, 0.1),
+     * MOTOR_REVERSE,
+     * MIN_SHOULDER_POSITION,
+     * MAX_SHOULDER_POSITION);
+     */
+
+    private final Motor shoulderMotor = MotorPool.create(
+            RobotContainer.SHOULDER_MOTOR_ID, MotorType.SparkMax);
+
+    private double shoulderManualOutput = 0.0;
 
     private final ArmJoint elbow = new ArmJoint(
-        "Elbow",
-        MotorPool.create(RobotContainer.ELBOW_MOTOR_ID, MotorType.SparkMax),
-        new Encoder(RobotContainer.ELBOW_ENCODER_ID),
-        new PIDController(3.5, 0.0, 0.1),
-        MOTOR_FORWARD,
-        MIN_ELBOW_POSITION, 
-        MAX_ELBOW_POSITION);
+            "Elbow",
+            MotorPool.create(RobotContainer.ELBOW_MOTOR_ID, MotorType.SparkMax),
+            new Encoder(RobotContainer.ELBOW_ENCODER_ID),
+            new PIDController(3.5, 0.0, 0.1),
+            MOTOR_FORWARD,
+            MIN_ELBOW_POSITION,
+            MAX_ELBOW_POSITION);
 
     @Override
     public void periodic() {
-        Stream.of(shoulder, elbow).forEach(joint -> {
+        // Shoulder manual control
+        double shoulderPower = Math.max(
+                -MAX_MOTOR_OUTPUT, Math.min(MAX_MOTOR_OUTPUT, shoulderManualOutput));
+        shoulderMotor.set(shoulderPower * MOTOR_REVERSE);
+
+        SmartDashboard.putNumber("Shoulder Manual Power", shoulderPower);
+
+
+        elbow.motor.set(shoulderPower);
+
+        /*
+         * Stream.of(shoulder, elbow).forEach(joint -> {
+         */
+
+        // Elbow PID control
+        Stream.of(elbow).forEach(joint -> {
             // read current and target position
             double encoderPosition = joint.encoder.getNormalizedRotation();
             double target = Math.max(joint.minPosition, Math.min(joint.maxPosition, joint.pid.getSetpoint()));
@@ -51,9 +78,9 @@ public class ArmSubsystem extends SubsystemBase {
             output = Math.max(-MAX_MOTOR_OUTPUT, Math.min(MAX_MOTOR_OUTPUT, output));
             double error = joint.pid.getError();
 
-            if (Math.abs(error) < 0.01) {
-                joint.motorActive = false;
-            }
+        //     if (Math.abs(error) < 0.01) {
+        //         joint.motorActive = false;
+        //     }
 
             // log all calculations for debugging/tuning
             SmartDashboard.putNumber(joint.name + " Position", encoderPosition);
@@ -67,30 +94,37 @@ public class ArmSubsystem extends SubsystemBase {
 
             // when active, run motor to correct position; otherwise stop
             joint.motor.set(motorPower);
-        });    
+        });
+    }
+
+    public Command moveShoulder(double speed) {
+        return startEnd(
+                () -> shoulderManualOutput = speed * SHOULDER_MANUAL_SPEED,
+                () -> shoulderManualOutput = 0.0);
     }
 
     public Command extend() {
-        return runOnce(() -> {
-            shoulder.pid.setSetpoint(MAX_SHOULDER_POSITION);
+        return startEnd(() -> {
+            // shoulder.pid.setSetpoint(MAX_SHOULDER_POSITION);
+            // shoulder.motorActive = true;
+
             elbow.pid.setSetpoint(MAX_ELBOW_POSITION);
-            shoulder.motorActive = true;
             elbow.motorActive = true;
+        }, () -> {
+            // shoulder.motorActive = false;
+            elbow.motorActive = false;
         });
     }
 
     public Command retract() {
-        return runOnce(() -> {
-            shoulder.pid.setSetpoint(MIN_SHOULDER_POSITION);
-            elbow.pid.setSetpoint(MIN_ELBOW_POSITION);
-            shoulder.motorActive = true;
-            elbow.motorActive = true;
-        });
-    }
+        return startEnd(() -> {
+            // shoulder.pid.setSetpoint(MIN_SHOULDER_POSITION);
+            // shoulder.motorActive = true;
 
-    public Command stop() {
-        return runOnce(() -> {
-            shoulder.motorActive = false;
+            elbow.pid.setSetpoint(MIN_ELBOW_POSITION);
+            elbow.motorActive = true;
+        }, () -> {
+            // shoulder.motorActive = false;
             elbow.motorActive = false;
         });
     }
@@ -116,4 +150,5 @@ public class ArmSubsystem extends SubsystemBase {
             this.maxPosition = max;
         }
     }
+
 }
